@@ -1,9 +1,10 @@
 package ast
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
-	//expr "github.com/DynamoGraph/gql/expression"
+
 	"github.com/DynamoGraph/ds"
 	"github.com/DynamoGraph/gql/expression/token"
 )
@@ -193,12 +194,6 @@ func (g *GQLFunc) AssignName(input string, loc token.Pos) {
 	g.FName = name_{Name: input, Loc: loc}
 }
 
-func (g *GQLFunc) GetPredicates() []string {
-	s := make([]string, 1, 1)
-	s[0] = g.Farg.Name()
-	return s
-}
-
 func (g *GQLFunc) Name() string {
 	return g.FName.Name
 }
@@ -210,6 +205,15 @@ func (f *GQLFunc) String() string {
 	s.WriteString(f.Farg.Name())
 	s.WriteByte(')')
 	return s.String()
+}
+
+func (g *GQLFunc) GetPredicates(pred []string) []string {
+	fmt.Printf("in Getpredicates for Farg: %T %s\n", g.Farg, g.Farg.Name())
+	s := g.Farg.Name()
+	fmt.Println("s = ", s)
+	pred = append(pred, s)
+	fmt.Println("pred = ", pred)
+	return pred
 }
 
 // func (g *GQLFunc) Execute() []db.QResult {

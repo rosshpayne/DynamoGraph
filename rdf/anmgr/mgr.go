@@ -79,7 +79,7 @@ func PowerOn(ctx context.Context, wp *sync.WaitGroup, wgEnd *sync.WaitGroup) {
 			)
 			if len(edges) > 0 {
 				//
-				slog.Log(LogLabel, fmt.Sprintf("len(attachDone) < len(edges). % %d", len(attachDone), len(edges)))
+				slog.Log(LogLabel, fmt.Sprintf("len(attachDone) < len(edges). %d %d", len(attachDone), len(edges)))
 				for len(attachDone) < len(edges) { // 1 accounts for last currently  running attacher which has just been started
 					//
 					for _, e := range edges {
@@ -106,8 +106,9 @@ func PowerOn(ctx context.Context, wp *sync.WaitGroup, wgEnd *sync.WaitGroup) {
 							}
 							continue
 						}
-
-						// get UUIDs for rdf blank node names (SName) from uuid goroutine
+						//
+						// get UUIDs for rdf blank node names (SName) from uuid service
+						//
 						uuid.ReqCh <- uuid.Request{SName: e.CSn, RespCh: lch}
 						csn := <-lch
 						uuid.ReqCh <- uuid.Request{SName: e.PSn, RespCh: lch}

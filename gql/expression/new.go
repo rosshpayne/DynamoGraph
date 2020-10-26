@@ -278,6 +278,7 @@ func New(input string) *Expression {
 	if e == nil {
 		// not boolean expression just a bool - create a dummy expression
 		e, _ = makeExpr(loperand, token.NOOP, &FilterFunc{value: true})
+		fmt.Printf("Dummy expression  %#v\n", e)
 		return e
 
 	}

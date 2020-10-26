@@ -139,13 +139,39 @@ func TestSimpleRootQuery1f(t *testing.T) {
 	fmt.Printf("TExecute duration: %s \n", t1.Sub(t0))
 }
 
-func TestFilterQuery1(t *testing.T) {
+func TestRootFilter1(t *testing.T) {
 
 	input := `{
-  directors(func: eq(count(Siblings), 2) @filter(gt(Age,63))) {
+  directors(func: eq(count(Siblings), 2) @filter(gt(Age,60))) {
     Age
     Name
     Friends {
+      Age
+    	Name
+    	Friends {
+    	  Name
+		    Age
+	    }
+	    Siblings {
+    		Name
+	   	}
+    }
+  }
+}`
+
+	t0 := time.Now()
+	Execute(input)
+	t1 := time.Now()
+	fmt.Printf("TExecute duration: %s \n", t1.Sub(t0))
+}
+
+func TestUPredFilter1(t *testing.T) {
+
+	input := `{
+  directors(func: eq(count(Siblings), 2) ) {
+    Age
+    Name
+    Friends @filter(gt(Age,60)) {
       Age
     	Name
     	Friends {

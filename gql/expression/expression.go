@@ -5,6 +5,7 @@ package expression
 
 import (
 	"fmt"
+	"strings"
 
 	blk "github.com/DynamoGraph/block"
 	"github.com/DynamoGraph/ds"
@@ -36,9 +37,9 @@ type node struct {
 	j, k int
 }
 
-func (e *Expression) rootExecute(nv ds.NVmap) bool {
+func (e *Expression) rootExecute(nv ds.NVmap, ty string) bool {
 
-	v := node{ty: "", j: -1, k: -1}
+	v := node{ty: ty, j: -1, k: -1}
 	walk(e, nv, v)
 	return e.getResult(nv, v)
 }
@@ -80,36 +81,41 @@ func walk(e operand, nv ds.NVmap, v node) {
 			e.result = e.right.getResult(nv, v)
 
 		}
+		fmt.Println(strings.Repeat("+", 80))
 		fmt.Printf("Result: %v %v\n", e.opr, e.result)
 	}
 
 }
 
-func walkPreds(e operand, pred []string) {
+func walkPreds(e operand, pred []string) []string {
 
 	if e, ok := e.(*Expression); ok {
 
 		walkPreds(e.left, pred)
 		walkPreds(e.right, pred)
 
-		p := e.left.getPredicates()
-		if len(p) > 0 {
-			pred = append(pred, p...)
-		}
-		p = e.right.getPredicates()
-		if len(p) > 0 {
-			pred = append(pred, p...)
-		}
+		pred := e.left.getPredicates(pred)
+		fmt.Println("in walkPreds. left...pred = ", pred)
+		// if len(p) > 0 {
+		// 	pred = append(pred, p...)
+		// }
+		pred = e.right.getPredicates(pred)
+		fmt.Println("in walkPreds. right...pred = ", pred)
+		// if len(p) > 0 {
+		// 	pred = append(pred, p...)
+		// }
+
+		return pred
 
 	}
-
+	return pred
 }
 
 func (e *Expression) GetPredicates() []string {
 
 	var pred []string
 
-	walkPreds(e, pred)
+	pred = walkPreds(e, pred)
 
 	return pred
 
@@ -127,7 +133,7 @@ func findRoot(e *Expression) *Expression {
 // So far type num (integer), Expression satisfy, but this can of course be extended to floats, complex numbers, functions etc.
 type operand interface {
 	//	getParent() *Expression
-	getPredicates() []string
+	getPredicates([]string) []string
 	type_() string
 	printName() string
 	getResult(ds.NVmap, node) bool
@@ -155,8 +161,8 @@ func (e *Expression) printName() string {
 	return e.name
 }
 
-func (f *Expression) getPredicates() []string {
-	return nil
+func (f *Expression) getPredicates(p []string) []string {
+	return p
 }
 
 func (e *Expression) type_() string {
@@ -175,17 +181,17 @@ var active bool
 
 // RootApply filters the Root query result for a single PKey only. The result for each predicate
 // in the zero level of the graph (first node) are held in nv
-func (e *Expression) RootApply(nv ds.ClientNV) bool {
+func (e *Expression) RootApply(nv ds.ClientNV, ty string) bool {
 	nvm := make(ds.NVmap)
 	for _, v := range nv {
 		nvm[v.Name] = v
 	}
-	return e.rootExecute(nvm)
+	return e.rootExecute(nvm, ty)
 }
 
-// Apply will run the filter function over all edges setting the associated NV.State for the edge to soft-deleted (1) if it fails.
-// NV value contains allthe edges associated with the current node stored as [][]<type> for each predicate.
-// see cache.UnmarshalNodeCache for more details of the data structures.
+// Apply will run the filter function over all edges for a uid-pred
+// NV value contains all the edges associated with the current uid-pred stored as [][]<type> for each predicate.
+// see cache.UnmarshalNodeCache for more details of the data structure.
 func (e *Expression) Apply(nvm ds.NVmap, ty string, predicate string) bool {
 	//
 	// source NV for current uid-pred
@@ -260,8 +266,12 @@ func (f *FilterFunc) printName() string {
 	return f.name
 }
 
-func (f *FilterFunc) getPredicates() []string {
-	return f.gqlFunc.GetPredicates()
+func (f *FilterFunc) getPredicates(pred []string) []string {
+	// for dummy expressions the right operand has a nil gqlFunc
+	if f.gqlFunc != nil {
+		return f.gqlFunc.GetPredicates(pred)
+	}
+	return pred
 }
 
 func (f *FilterFunc) Print() string {

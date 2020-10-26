@@ -78,14 +78,5 @@ func PowerOn(ctx context.Context, wp *sync.WaitGroup, wgEnd *sync.WaitGroup) {
 			return
 
 		}
-
-		// check for context close channel in separate select - to keep concurrent requests from UUID services and context close separate
-
-		// select {
-		// case <-ctx.Done():
-		// 	slog.Log("rdfuuid: ", "Powering down...")
-		// 	return
-		// default:
-		// }
 	}
 }
